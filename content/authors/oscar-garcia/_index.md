@@ -1,9 +1,9 @@
 ---
 title: Oscar Garcia
 bio: |
-  TODO
-avatar: /images/default-avatar.jpg
+  Cloud computing
+avatar: 	/authors/oscar-garcia/oscar_garcia.jpeg
 social:
-  - title: github
-    url: TODO
+  - title: Linkedin
+    url: https://www.linkedin.com/in/oscar-fernando-garcia-alvarado-200591181/?originalSubdomain=jp
 ---
