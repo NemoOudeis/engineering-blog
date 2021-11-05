@@ -15,6 +15,7 @@ license: cc-by
 
 *[Photo by Kammeran Gonzalez-Keola](https://www.pexels.com/@kammeran-gonzalez-keola-3137381) used under [Pexels License](https://www.pexels.com/license/)*
 
+
 At Rakuten, we generally use Kubernetes to run our services. Kubernetes enables us to operate robust systems at scale. However, Kubernetes is not perfect and in edge cases it may behave in unexpected ways. For example, during rolling deployments we expect no request failures --- a reasonable expectation, right? But when we ran functional tests during a deployment we noticed some requests failing --- to our surprise. After researching this for a while we learned that...
 
 > Kubernetes will send traffic to terminating pods.
