@@ -1,21 +1,7 @@
 import { Grammarly } from '@stewartmcgown/grammarly-api';
+import { GrammarlyResult } from '@stewartmcgown/grammarly-api/build/lib/api';
 import { ProblemResponse } from '@stewartmcgown/grammarly-api/build/lib/responses';
-
-
-const text = `
-Hemingway App makes your writing bold and clear.
-
-The app highlights lengthy, complex sentences and common errors; if you see a yellow sentence, shorten or split it. If you see a red highlight, your sentence is so dense and complicated that your readers will get lost trying to follow its meandering, splitting logic — try editing this sentence to remove the red.
-
-You can utilize a shorter word in place of a purple one. Mouse over them for hints.
-
-Adverbs and weakening phrases are helpfully shown in blue. Get rid of them and pick words with force, perhaps.
-
-Phrases in green have been marked to show passive voice.
-
-You can format your text with the toolbar.
-
-Paste in something you're working on and edit away. Or, click the Write button and compose something new.`;
+import * as fs from 'fs/promises';
 
 const credentials = {
     auth: {
@@ -24,18 +10,82 @@ const credentials = {
     }
 }
 
+const exists = async (path: string) => {
+    try {
+        const result = await fs.stat(path)
+        return !result ? result : true
+    } catch {
+        return false
+    }
+}
+
 const grammarly = new Grammarly(credentials)
 
-const main = async (text: string) => {
+export const analyseFile = async (path: string): Promise<GrammarlyResult[]> => {
+
+    const text = await fs.readFile(`./${path}`, { encoding: 'utf-8' })
+    
+    let paragraphs = 
+        text.split('---\n')[2] // strip preamble
+            .split('```') // strip code snippets
+            .filter( (v,i) => i % 2 === 0)
+            .join('\n')
+            .split('\n\n') // split paragraphs
+            .filter(it => !it.startsWith('![')) // filter images
+            .filter(it => it !== "") // filter empty lines
+    
+    console.log(paragraphs.length)
+
+    const results = []
+
+    let iterations = 0
+
+    for(const paragraph of paragraphs) {
+        iterations++
+        console.log(iterations)
+        if(iterations % 10 === 0) {
+            console.log('sleeping...')
+            await sleep(60_000)
+            console.log('continue...')
+        }
+
+        const result = await analyseText(paragraph)
+        if (result.alerts.length > 0) {
+            results.push(result)
+        }
+        console.log(`result size ${results.length}`)
+    }
+
+    return results
+}
+
+const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+const dump = async (contents: any) => {
+    await fs.writeFile('./dump.json', JSON.stringify(contents, null, 2), { encoding: 'utf-8' })
+}
+
+const analyseText = async (text: string) => {
     const results = await grammarly.analyse(text);
     results.alerts.forEach(transformProblemResponse)
+    return results
+}
 
-    console.log(results)
+const main = async () => {
+
+    // content/post/graceful-k8s-delpoyments/index.md
+    // content/post/elm-at-rakuten/index.md
+
+    const files = process.argv.slice(2)
+
+    for (const file of files) {
+        dump(await analyseFile(file))
+    }
 
     process.exit(0)
 }
 
-main(text)
+main()
 
 const transformProblemResponse = (it: ProblemResponse): ProblemResponse =>  {
     it.details = htmlToMarkdown(it.details || "")
